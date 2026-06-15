@@ -1,8 +1,8 @@
 # HANDOFF — local-learning-meeting-notes (새 세션 인계 문서)
 
 > 이 파일은 새 Claude Code 세션이 이 프로젝트를 이어받기 위한 단일 진입점이다.
-> 갱신 시점: 2026-06-15 (**M2 완료 + 폰 실증 + GitHub Pages 배포 완료**).
-> 다음 작업: **M3** (Markdown 내보내기 + JSON 백업/복원 + 마감).
+> 갱신 시점: 2026-06-15 (**M3 완료** — 코드 + 브라우저 스모크 전부 통과. 미커밋).
+> 다음 작업: **M3 커밋/푸시 → M4**.
 
 ---
 
@@ -11,8 +11,8 @@
 1. 이 문서 + `README.md` + 루트의 소스 지시문 2개를 읽는다:
    - `c:\Claude-Code\codex_phase1_instruction_revised.md` (제품 정의·기능·금지사항)
    - `c:\Claude-Code\analysis_prompts.md` (SYSTEM + 수업1·회의4종 프롬프트·JSON 스키마)
-2. **route B(브라우저→클라우드 직접호출)는 이미 실증됨** — CORS 게이트 통과(아래 §5). M3는 이 위에서 진행하면 된다. 재검증 불필요.
-3. M3 착수 전 **사용자에게 M3 미결 결정 2개만 확인**한다(§7 하단). 그 다음 바로 M3 빌드.
+2. **route B(브라우저→클라우드 직접호출)는 이미 실증됨** — CORS 게이트 통과(아래 §5). 재검증 불필요.
+3. **M3 완료됨**(§7) — 코드 + 브라우저 스모크 전부 통과(미커밋). 미결 결정 3개 사용자 확정: 백업=기록만(오디오 제외)·복원=id병합(upsert)·설정/키 제외. 남은 건 **커밋/푸시**, 그 다음 M4.
 
 ---
 
@@ -63,7 +63,7 @@ GitHub: https://github.com/daolmk-beep/local-learning-meeting-notes — **레포
 - `modules/ui.js` — 결과/목록/상세 렌더. 상세에 전사엔진·오디오·전송표시 + 녹음 재생기 placeholder(`#detail-audio`)
 - `adapters/analysis.js` — **핵심**. `ApiLlm`(anthropic 기본+openai 분기) / `ManualLlm` / `RuleBased`. `extractJson`(첫{~마지막}) → 1회 재요청 → rule 폴백. `analyzeTranscript()` 오케스트레이터
 - `adapters/transcription.js` — `ManualTranscriptAdapter` / **`CloudSttAdapter`(OpenAI Whisper multipart, 동작)** / `LocalWhisperAdapter`(M4 placeholder) + `testAnalysisConnection`/`testSttConnection`(CORS 조기검증)
-- `manifest.webmanifest` / `service-worker.js`(앱셸 캐시 `llmn-shell-v2`, 오프라인 열람) / `icons/icon-192.png`·`icon-512.png`
+- `manifest.webmanifest` / `service-worker.js`(앱셸 캐시 `llmn-shell-v4`, **네트워크 우선+3초 타임아웃 폴백**, 오프라인 열람) / `icons/icon-192.png`·`icon-512.png`
 - `scripts/generate-icons.mjs` — 의존성 없는 PNG 아이콘 생성기
 - `README.md`, `HANDOFF.md`
 
@@ -71,8 +71,7 @@ GitHub: https://github.com/daolmk-beep/local-learning-meeting-notes — **레포
 
 ## 4. 아직 없는 것
 
-- **Markdown 내보내기 / JSON 백업·복원 (M3 핵심)**.
-- 데이터 전체 삭제, 오프라인 최종 마감(SW는 셸 캐시까지만 됨), 지시문 `[검증]` 체크리스트 전수(M3).
+- ~~Markdown 내보내기 / JSON 백업·복원~~ → **M3 구현 완료**(아래 §7).
 - 로컬 Whisper(M4).
 - Deepgram STT(화자분리) — 현재 OpenAI Whisper만. `CloudSttAdapter`에 분기 자리만.
 - 긴 전사문 청크 분할/병합(2단계 후반).
@@ -105,9 +104,27 @@ GitHub: https://github.com/daolmk-beep/local-learning-meeting-notes — **레포
 
 ---
 
-## 7. 다음 작업 — M3 (매일쓰기 마감)
+## 7. M3 (매일쓰기 마감) — ✅ 코드 완료
 
 목표: **매일 실무에서 굴릴 수 있게 "꺼내 쓰기·지키기"를 완성.**
+
+**구현 완료(2026-06-15):**
+
+- `modules/export.js` 신규 — `recordToMarkdown(record)`(ui.js 렌더 구조 미러링, 모드/템플릿별 섹션·테이블·MNPI 포함), `recordsToBackupJson`/`parseBackup`(배열·{records} 양형 허용+유효성), `markdownFilename`(`YYYYMMDD_HHMM_모드_제목.md`, 윈도우 금지문자 안전화), `backupFilename`(`llmn_backup_YYYYMMDD.json`), `downloadBlob`.
+- `modules/db.js` — `clearAudio()` 추가.
+- `index.html` — 상세에 `#btn-export-md`, 설정에 "데이터 관리"(`#btn-backup`/`#btn-restore`+`#restore-file`/`#btn-clear-data`, `#data-status`).
+- `app.js` — `onExportMarkdown`/`onBackup`/`onRestoreFile`(upsert)/`onClearData`(확인모달→clearRecords+clearAudio, 설정·키 유지) 배선.
+- `service-worker.js` — SHELL에 `./modules/export.js` 추가. 전략 변경: **캐시 우선 → 네트워크 우선 + 3초 타임아웃 폴백**(`networkFirst`, `NET_TIMEOUT_MS=3000`). 캐시 `llmn-shell-v2`→**`v4`**. 온라인이면 항상 최신 코드, 느린/오프라인 망은 캐시 폴백(과거 기록 오프라인 열람 유지). 개발 중 stale 코드 함정 제거가 목적.
+- `README.md` — 사용법 6번·로드맵 M3 완료.
+- **검증:** 전 12개 모듈 `node --check` 통과. export.js 순수함수 노드 스모크(MD 출력/파일명/백업 라운드트립/잘못된입력 거부) 통과. 정적 서버 export.js MIME=text/javascript 200, html/sw 배선 grep 확인.
+- **브라우저 스모크 통과(2026-06-15, 사용자 수행):** ① 상세 MD 내보내기 다운로드 ✓ ② JSON 백업 → 복원 라운드트립(id 병합, 중복 없음) ✓ ③ 전체삭제 모달·동작(설정/키 유지) ✓ ④ 빈 상태 → 복원 원복 ✓ + SW **v4 네트워크 우선** 실동작 확인(stale 코드 함정 해소).
+- 선택적 미실시: 망 끊고 SW 캐시 오프라인 열람만.
+
+**확정된 M3 결정(사용자):** 백업 오디오 **제외** / 복원 **id 병합(upsert)** / 백업에 설정·API키 **제외**(키 유출 방지).
+
+---
+
+(원래 계획 — 참고용)
 
 해야 할 것:
 

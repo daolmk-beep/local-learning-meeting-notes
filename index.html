@@ -92,6 +92,7 @@
         <button id="btn-back" class="ghost">← 목록</button>
         <div id="detail-area"></div>
         <div class="actions">
+          <button id="btn-export-md" class="ghost">Markdown 내보내기</button>
           <button id="btn-delete" class="danger">삭제</button>
         </div>
       </section>
@@ -173,6 +174,20 @@
           <button id="btn-save-settings" class="primary">설정 저장</button>
           <span id="settings-status" class="status"></span>
         </div>
+
+        <hr class="sep" />
+        <h2 class="set-h">데이터 관리</h2>
+        <p class="hint">백업/복원은 <b>기록(전사문·분석결과)</b>만 다룹니다. 녹음 오디오와 설정·API 키는 백업에 포함되지 않습니다.</p>
+        <div class="actions">
+          <button type="button" id="btn-backup" class="ghost">JSON 백업 내보내기</button>
+          <button type="button" id="btn-restore" class="ghost">JSON 백업 복원</button>
+          <input type="file" id="restore-file" accept="application/json,.json" hidden />
+        </div>
+        <p id="data-status" class="status"></p>
+        <div class="actions">
+          <button type="button" id="btn-clear-data" class="danger">모든 기록·녹음 삭제</button>
+        </div>
+        <p class="hint">전체 삭제는 이 기기의 모든 기록과 녹음 백업을 지웁니다(설정·키는 유지). 되돌릴 수 없습니다.</p>
       </section>
     </main>
 

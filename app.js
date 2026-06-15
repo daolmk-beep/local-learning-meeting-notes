@@ -6,10 +6,20 @@ import {
   getAllRecords,
   getRecord,
   deleteRecord,
+  clearRecords,
   putAudio,
   getAudio,
   deleteAudio,
+  clearAudio,
 } from "./modules/db.js";
+import {
+  recordToMarkdown,
+  markdownFilename,
+  recordsToBackupJson,
+  backupFilename,
+  parseBackup,
+  downloadBlob,
+} from "./modules/export.js";
 import { analyzeTranscript, ManualLlmAdapter } from "./adapters/analysis.js";
 import {
   CloudSttAdapter,
@@ -362,6 +372,15 @@ async function onDelete() {
   showView("list");
 }
 
+// 상세 기록 → Markdown 파일 내보내기
+async function onExportMarkdown() {
+  if (!detailId) return;
+  const rec = await getRecord(detailId);
+  if (!rec) return;
+  const md = recordToMarkdown(rec);
+  downloadBlob(markdownFilename(rec), new Blob([md], { type: "text/markdown;charset=utf-8" }));
+}
+
 // ---------- 설정 ----------
 function fillSettingsForm() {
   $("#set-mode").value = settings.analysisMode;
@@ -396,6 +415,54 @@ async function onSaveSettings() {
   });
   $("#settings-status").textContent = "저장됨";
   setTimeout(() => ($("#settings-status").textContent = ""), 1500);
+}
+
+// ---------- 데이터 관리 (백업 / 복원 / 전체 삭제) ----------
+function setDataStatus(msg) {
+  $("#data-status").textContent = msg || "";
+}
+
+async function onBackup() {
+  const records = await getAllRecords();
+  if (!records.length) {
+    setDataStatus("백업할 기록이 없습니다.");
+    return;
+  }
+  const json = recordsToBackupJson(records);
+  downloadBlob(backupFilename(), new Blob([json], { type: "application/json;charset=utf-8" }));
+  setDataStatus(`${records.length}건 백업 내보냄 (오디오·설정 제외).`);
+}
+
+async function onRestoreFile(ev) {
+  const file = ev.target.files && ev.target.files[0];
+  ev.target.value = ""; // 같은 파일 재선택 허용
+  if (!file) return;
+  setDataStatus("복원 중…");
+  try {
+    const text = await file.text();
+    const records = parseBackup(text);
+    let n = 0;
+    for (const rec of records) {
+      await putRecord(rec); // id 기준 병합(upsert)
+      n++;
+    }
+    setDataStatus(`${n}건 복원 완료 (id 기준 병합).`);
+  } catch (err) {
+    setDataStatus("복원 실패: " + err.message);
+  }
+}
+
+async function onClearData() {
+  const ok = await confirmModal({
+    title: "모든 기록·녹음 삭제",
+    body: "이 기기의 모든 기록과 녹음 백업을 삭제합니다. 설정·키는 유지됩니다. 되돌릴 수 없습니다. 계속하시겠습니까?",
+    okText: "전체 삭제",
+  });
+  if (!ok) return;
+  await clearRecords();
+  await clearAudio();
+  detailId = null;
+  setDataStatus("모든 기록·녹음을 삭제했습니다.");
 }
 
 // ---------- 연결 테스트 (CORS 조기 검증) ----------
@@ -484,8 +551,15 @@ async function init() {
   };
   $("#btn-back").onclick = () => showView("list");
   $("#btn-delete").onclick = onDelete;
+  $("#btn-export-md").onclick = onExportMarkdown;
   $("#btn-save-settings").onclick = onSaveSettings;
   $("#set-provider").onchange = onProviderChange;
+
+  // 데이터 관리
+  $("#btn-backup").onclick = onBackup;
+  $("#btn-restore").onclick = () => $("#restore-file").click();
+  $("#restore-file").onchange = onRestoreFile;
+  $("#btn-clear-data").onclick = onClearData;
 
   // 녹음 / STT
   if (isRecordingSupported()) {

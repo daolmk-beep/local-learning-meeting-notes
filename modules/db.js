@@ -92,6 +92,11 @@ export async function deleteAudio(id) {
   await reqToPromise(store.delete(id));
 }
 
+export async function clearAudio() {
+  const store = await tx(STORE_AUDIO, "readwrite");
+  await reqToPromise(store.clear());
+}
+
 // ---- settings (key-value) ----
 export async function getSetting(key, fallback = null) {
   const store = await tx(STORE_SETTINGS, "readonly");
