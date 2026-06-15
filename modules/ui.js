@@ -1,5 +1,5 @@
 // 렌더링 헬퍼 — 분석 결과 / 목록 / 상세를 HTML 문자열로 만든다.
-import { MODE_LABELS, TEMPLATE_LABELS, ENGINE_LABELS } from "./model.js";
+import { MODE_LABELS, TEMPLATE_LABELS, ENGINE_LABELS, TRANSCRIPTION_LABELS } from "./model.js";
 
 export function esc(s) {
   return String(s == null ? "" : s)
@@ -215,13 +215,19 @@ export function renderList(records) {
 export function renderDetail(rec) {
   const tmpl = rec.mode === "meeting" && rec.meeting?.template ? ` · ${TEMPLATE_LABELS[rec.meeting.template] || ""}` : "";
   const eng = rec.analysis?.engine ? ENGINE_LABELS[rec.analysis.engine] || rec.analysis.engine : "-";
-  const sent = rec.analysis?.externalSent ? "외부 전송됨" : "외부 미전송";
+  const sent = rec.analysis?.externalSent ? "분석 전송됨" : "분석 미전송";
+  const trEng = rec.transcription?.engine
+    ? TRANSCRIPTION_LABELS[rec.transcription.engine] || rec.transcription.engine
+    : "";
+  const audio = rec.audioBlobId ? " · 녹음 백업 있음" : "";
+  const audioSent = rec.transcription?.externalSent ? " · 오디오 전송됨" : "";
   return `
     <div class="detail-head">
       <span class="badge ${rec.mode}">${MODE_LABELS[rec.mode] || rec.mode}${esc(tmpl)}</span>
-      <span class="muted sm">${fmtDate(rec.createdAt)} · ${esc(eng)} · ${esc(sent)}</span>
+      <span class="muted sm">${fmtDate(rec.createdAt)} · ${esc(eng)} · ${esc(sent)}${esc(trEng ? " · " + trEng : "")}${esc(audio)}${esc(audioSent)}</span>
     </div>
     <div class="result">${renderResult(rec.analysis?.result)}</div>
+    ${rec.audioBlobId ? `<div id="detail-audio" class="rec-result"></div>` : ""}
     <details class="transcript-box"><summary>전사문 보기</summary><pre>${esc(rec.transcript || "")}</pre></details>
   `;
 }

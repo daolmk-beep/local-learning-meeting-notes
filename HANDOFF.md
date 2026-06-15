@@ -1,7 +1,8 @@
 # HANDOFF — local-learning-meeting-notes (새 세션 인계 문서)
 
 > 이 파일은 새 Claude Code 세션이 이 프로젝트를 이어받기 위한 단일 진입점이다.
-> 작성 시점: 2026-06-15 (M1 완료·GitHub 푸시 직후).
+> 갱신 시점: 2026-06-15 (**M2 구현 완료**, 사용자 실테스트 대기 — 아직 커밋 전).
+> 직전: M1 완료·GitHub 푸시(`58c0894`).
 
 ---
 
@@ -41,11 +42,23 @@
 
 ---
 
-## 3. 현재 상태 — M1 완료
+## 3. 현재 상태 — M1 완료(푸시됨) + M2 구현 완료(미커밋, 실테스트 대기)
 
-변환 엔진 수직 슬라이스 구현·구문검증·서버 라우팅 확인·GitHub 푸시 완료.
+M2: 폰 현장 루프(PWA 설치형 + 녹음 + route B 클라우드 STT + 오디오 동의 + 연결 테스트) 구현·구문검증·서버 라우팅 확인 완료. **아직 커밋/푸시 안 됨.**
 
-**파일 맵:**
+**M2 추가/변경 파일:**
+- `modules/recorder.js` (신규) — `createRecorder()`(MediaRecorder, webm/mp4 자동선택) + `storeAudioBlob()`
+- `adapters/transcription.js` — **CloudSttAdapter 구현**(OpenAI Whisper, multipart) + `testAnalysisConnection`/`testSttConnection`(CORS 조기검증: fetch TypeError=차단, HTTP응답=통과)
+- `modules/db.js` — **v2**: `audio` 스토어 + `putAudio/getAudio/deleteAudio`
+- `modules/model.js` — `createRecord`에 `transcriptionEngine`/`audioExternalSent`/`audioBlobId` 인자, `transcription.externalSent`, `TRANSCRIPTION_LABELS`
+- `modules/settings.js` — `sttAudioAlwaysAllow`(기본 off) 추가
+- `index.html` — manifest/apple 메타, 녹음 UI, STT 설정란, 연결 테스트 버튼 2개
+- `app.js` — 녹음 토글·STT 전사·오디오 동의 모달·STT 설정 저장·연결테스트·SW 등록·상세 녹음재생·삭제 시 오디오 cascade
+- `modules/ui.js` — 상세에 전사엔진/오디오/오디오전송 표시 + 녹음 재생기 placeholder
+- `styles.css` — 녹음/테스트/설정구분 스타일
+- `manifest.webmanifest`, `service-worker.js`(앱셸 캐시 `llmn-shell-v2`), `icons/icon-192.png`·`icon-512.png`(신규, `scripts/generate-icons.mjs`로 생성)
+
+**M1 파일 맵:**
 - `server.mjs` — 정적 서버 :4173
 - `package.json` — `type:module`
 - `index.html` / `styles.css` / `app.js` — UI + 전체 흐름 배선(경고 모달 포함)
@@ -62,31 +75,37 @@
 
 ---
 
-## 4. 아직 없는 것 / M1의 빈칸
+## 4. 아직 없는 것
 
-- `icons/` 비어 있음 → PWA용 192·512 PNG 필요(M2).
-- `manifest.webmanifest`, `service-worker.js` 미작성(M2).
-- 녹음/STT 미구현(M2), 내보내기·백업(M3), 로컬 Whisper(M4).
+- 내보내기(Markdown)·JSON 백업/복원(M3).
+- 로컬 Whisper(M4).
+- Deepgram STT(화자분리) — 현재 OpenAI Whisper만 구현. `CloudSttAdapter`에 분기 자리만 있음.
+- 긴 전사문 청크 분할/병합(2단계 후반).
+- https 호스팅 — 폰에서 마이크/PWA설치는 https 또는 localhost에서만 동작(아래 §5 주의).
 
 ---
 
 ## 5. 검증 상태
 
-**완료:** 전 모듈 `node --check` 통과, `node server.mjs` 라우팅/MIME/404 OK.
-**미검증(브라우저·실제 키 필요 → 사용자 실테스트 대기):**
-- 실제 Anthropic API 호출 시 **브라우저 직접호출 헤더(`anthropic-dangerous-direct-browser-access: true`) CORS 통과 여부**
-- FDD/M&A 등 실제 전사문 기준 **산출물 품질**(프롬프트 튜닝 판단점)
-- IndexedDB 저장/새로고침 유지, 회의모드 경고 모달, 키없음→manual 폴백
+**완료(M2 포함):** 전 모듈 `node --check` 통과. `node server.mjs`로 `/manifest.webmanifest`·`/service-worker.js`·`/icons/*.png`·신규 모듈 라우팅/MIME/404 OK. 아이콘 PNG 유효성 확인. HTML id↔app.js 참조 정합성 확인(동적생성 4개 제외).
 
-→ 새 세션은 이 결과를 사용자에게 먼저 물어볼 것.
+**미검증(브라우저·실제 키 필요 → 사용자 실테스트 대기):**
+- **연결 테스트 버튼으로 CORS 확인** — 설정탭의 "분석 API 연결 테스트"(Anthropic)·"STT API 연결 테스트"(OpenAI). 결과 표기: `✓`통과+키유효 / `△`CORS통과·인증/요청문제 / `✗`CORS·네트워크 차단. **`✗`(특히 STT)면 route B 직접호출 불가 → 프록시 검토.**
+- 녹음→정지→클라우드 STT 전사→전사문 자동채움→분석→저장 풀루프, 상세 녹음 재생.
+- 오디오 외부전송 동의 모달(회의 추가경고), 키없음→manual 폴백, IndexedDB v2 마이그레이션.
+- FDD/M&A 실제 전사문 **산출물 품질**(프롬프트 튜닝 판단점).
+
+**⚠ https 주의:** 마이크 녹음·서비스워커·PWA설치는 **보안컨텍스트(https) 또는 localhost에서만** 동작. PC localhost는 전기능 OK. **폰에서 PC의 LAN IP(http) 접속은 마이크/설치 막힘** → 폰 실사용/설치 테스트는 https 정적 호스팅(GitHub Pages 등) 필요. 배포는 별도 결정.
+
+→ 새 세션은 연결 테스트(CORS) 결과를 사용자에게 먼저 확인할 것.
 
 ---
 
-## 6. 다음 작업 — M2 (폰 현장 루프 + route B 클라우드 STT)
+## 6. M2 — 폰 현장 루프 + route B 클라우드 STT (✅ 구현 완료, 실테스트 대기)
 
 목표: **폰에서 설치형으로, 녹음/받아쓰기로 포착 → (동의 시) 클라우드 STT 전사 → 분석 → 저장**.
 
-해야 할 것:
+구현된 것(아래 항목 모두 코드 반영됨 — 상세 파일은 §3):
 1. **PWA 설치형**: `manifest.webmanifest`(이름·아이콘·display:standalone·theme) + `service-worker.js`(앱 셸 캐시 + 과거 기록 오프라인 열람) + `icons/icon-192.png`·`icon-512.png` 생성. `index.html`에 manifest/SW 등록 추가.
 2. **녹음(백업용 가볍게)**: `MediaRecorder`로 오디오 캡처 → Blob을 IndexedDB에 저장하고 `record.audioBlobId`로 연결. (별도 audio 스토어 권장)
 3. **CloudSttAdapter 구현(route B 핵심)**: 브라우저 → STT API 직접 호출(사용자 키).
@@ -97,9 +116,13 @@
 5. **오디오 외부전송 동의/경고**: 클라우드 STT로 오디오를 보내는 것은 새로운 외부 전송 → 별도 경고·동의. **회의 모드는 특히 보수적으로**(기본 opt-in, 기본 off 권장). 감사 플래그 추가.
 6. **검증**: OpenAI audio 엔드포인트 브라우저 CORS, 짧은 클립 전사, 녹음→전사→분석→저장 풀루프, 폰 설치/오프라인 열람.
 
-**M2 미결 결정(사용자 확인 필요):**
-- STT 공급자 기본값: OpenAI Whisper(권장) vs Deepgram(화자분리 강함, FDD/M&A의 "누가 말했나"에 유리).
-- 클라우드 STT 기본 on/off: **opt-in 권장**, 회의 모드 추가 경고.
+**M2 결정(확정):**
+- STT 공급자 기본값 = **OpenAI Whisper**(`whisper-1`). Deepgram(화자분리)은 후속 — 어댑터에 분기 자리만.
+- 클라우드 STT(오디오 외부전송) 기본 = **opt-in / off**(`sttAudioAlwaysAllow=false`), 회의 모드 추가 경고.
+
+**M2 이후 사용자 확인 필요:**
+- 연결 테스트(CORS) 결과 — `✗`면 프록시 노선 검토.
+- 폰 실사용을 위한 https 호스팅 여부(§5 주의) — 배포 결정.
 
 ---
 

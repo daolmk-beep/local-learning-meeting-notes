@@ -25,6 +25,12 @@ export const ENGINE_LABELS = {
   rule: "규칙 기반",
 };
 
+export const TRANSCRIPTION_LABELS = {
+  manual: "직접 입력",
+  cloud: "클라우드 STT",
+  local: "로컬 전사",
+};
+
 function uid() {
   return (
     "rec_" +
@@ -35,7 +41,15 @@ function uid() {
 }
 
 // 새 기록 생성
-export function createRecord({ mode, template = "general", title = "", transcript = "" }) {
+export function createRecord({
+  mode,
+  template = "general",
+  title = "",
+  transcript = "",
+  transcriptionEngine = "manual", // manual | cloud | local
+  audioExternalSent = false, // 오디오를 클라우드 STT로 보냈는지(감사 로그)
+  audioBlobId = null, // 녹음 백업 Blob 연결
+}) {
   const now = new Date().toISOString();
   return {
     id: uid(),
@@ -47,11 +61,12 @@ export function createRecord({ mode, template = "general", title = "", transcrip
       template: mode === "meeting" ? template : null,
     },
     transcription: {
-      engine: "manual", // manual | cloud | local (M2~)
+      engine: transcriptionEngine, // manual | cloud | local (M2~)
       text: transcript,
+      externalSent: !!audioExternalSent, // 오디오 외부 전송 감사 로그
     },
     transcript, // 편의 접근용 (transcription.text와 동기)
-    audioBlobId: null, // M2: 녹음 백업 연결
+    audioBlobId, // M2: 녹음 백업 연결
     analysis: {
       engine: null, // "api" | "manual" | "rule"
       externalSent: false, // 전사 텍스트 외부 전송 여부

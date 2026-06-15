@@ -126,6 +126,17 @@ button:disabled { opacity: 0.5; cursor: default; }
 .manual-prompt { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px; margin-top: 8px; }
 .manual-prompt pre { white-space: pre-wrap; max-height: 200px; overflow: auto; font-size: 12px; background: var(--bg); padding: 10px; border-radius: 8px; }
 
+/* 녹음 */
+.rec-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.rec-result { margin-top: 10px; }
+.rec-result audio { width: 100%; margin-bottom: 8px; }
+button.recording { background: var(--danger); color: #fff; }
+button.sm-btn { padding: 8px 12px; font-size: 13px; }
+
+/* 설정 구분 */
+.sep { border: none; border-top: 1px solid var(--border); margin: 22px 0 16px; }
+.set-h { font-size: 15px; margin: 0 0 4px; }
+
 /* 모달 */
 .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; padding: 20px; z-index: 100; }
 .modal { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; max-width: 420px; width: 100%; }

@@ -2,9 +2,10 @@
 // 모든 데이터(전사문·분석결과·설정)는 이 기기에만 저장된다. 외부 저장 없음.
 
 const DB_NAME = "llmn";
-const DB_VERSION = 1;
+const DB_VERSION = 2; // v2: audio 스토어 추가 (M2 녹음 백업)
 const STORE_RECORDS = "records";
 const STORE_SETTINGS = "settings";
+const STORE_AUDIO = "audio";
 
 let _dbPromise = null;
 
@@ -21,6 +22,9 @@ function openDB() {
       }
       if (!db.objectStoreNames.contains(STORE_SETTINGS)) {
         db.createObjectStore(STORE_SETTINGS, { keyPath: "key" });
+      }
+      if (!db.objectStoreNames.contains(STORE_AUDIO)) {
+        db.createObjectStore(STORE_AUDIO, { keyPath: "id" });
       }
     };
     req.onsuccess = () => resolve(req.result);
@@ -66,6 +70,26 @@ export async function deleteRecord(id) {
 export async function clearRecords() {
   const store = await tx(STORE_RECORDS, "readwrite");
   await reqToPromise(store.clear());
+}
+
+// ---- audio (녹음 백업 Blob) ----
+// row: { id, blob, mime, createdAt }. record.audioBlobId 로 연결.
+export async function putAudio(row) {
+  const store = await tx(STORE_AUDIO, "readwrite");
+  await reqToPromise(store.put(row));
+  return row;
+}
+
+export async function getAudio(id) {
+  if (!id) return null;
+  const store = await tx(STORE_AUDIO, "readonly");
+  return reqToPromise(store.get(id));
+}
+
+export async function deleteAudio(id) {
+  if (!id) return;
+  const store = await tx(STORE_AUDIO, "readwrite");
+  await reqToPromise(store.delete(id));
 }
 
 // ---- settings (key-value) ----

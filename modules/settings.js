@@ -14,11 +14,15 @@ export const DEFAULT_SETTINGS = {
   // 회의 모드 외부 전송
   meetingApiAlwaysAllow: false, // 기본 off — 매번 경고/동의
 
-  // 전사 (M2에서 사용)
+  // 전사 (M2) — 클라우드 STT (route B: 브라우저 → STT API 직접 호출)
   sttProvider: "openai", // "openai" | "deepgram"
   sttApiKey: "",
   sttModel: "whisper-1",
   sttEndpoint: "https://api.openai.com/v1/audio/transcriptions",
+
+  // 오디오 외부 전송(클라우드 STT) — 전사 텍스트 경고와 별개의 추가 동의.
+  // 기본 off(opt-in). 회의 모드는 매번 더 보수적으로 경고.
+  sttAudioAlwaysAllow: false,
 };
 
 const KEY = "settings";

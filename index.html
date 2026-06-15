@@ -6,6 +6,11 @@
     <meta name="theme-color" content="#1f2937" />
     <title>로컬 AI 노트</title>
     <link rel="stylesheet" href="styles.css" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="icons/icon-192.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="AI 노트" />
   </head>
   <body>
     <header class="app-header">
@@ -43,9 +48,25 @@
           <input type="text" id="title" placeholder="비워두면 분석 결과 제목 사용" />
         </div>
 
+        <div class="field" id="record-field">
+          <label>녹음 (백업용)</label>
+          <div class="rec-row">
+            <button type="button" id="btn-rec" class="ghost">● 녹음 시작</button>
+            <span id="rec-status" class="status"></span>
+          </div>
+          <div id="rec-result" class="rec-result hidden">
+            <audio id="rec-audio" controls></audio>
+            <div class="actions">
+              <button type="button" id="btn-transcribe" class="primary sm-btn">클라우드 STT로 전사</button>
+              <button type="button" id="btn-rec-clear" class="ghost sm-btn">녹음 지우기</button>
+            </div>
+          </div>
+          <p class="hint">녹음 오디오는 기기에만 저장됩니다. 전사를 누르면 오디오가 STT API로 전송되며, 그 전에 동의를 받습니다.</p>
+        </div>
+
         <div class="field">
           <label for="transcript">전사문</label>
-          <textarea id="transcript" rows="10" placeholder="회의/강의 내용을 붙여넣거나, 폰 키보드 마이크(받아쓰기)로 입력하세요."></textarea>
+          <textarea id="transcript" rows="10" placeholder="회의/강의 내용을 붙여넣거나, 폰 키보드 마이크(받아쓰기)로 입력하세요. 녹음했다면 위에서 '클라우드 STT로 전사'를 누르세요."></textarea>
         </div>
 
         <div class="actions">
@@ -112,6 +133,42 @@
         <div class="field check">
           <label><input type="checkbox" id="set-always" /> 회의 모드 API 분석 항상 허용 (경고 생략)</label>
         </div>
+        <div class="actions">
+          <button type="button" id="btn-test-analysis" class="ghost">분석 API 연결 테스트</button>
+          <span id="test-analysis-status" class="status"></span>
+        </div>
+
+        <hr class="sep" />
+        <h2 class="set-h">클라우드 STT (녹음 전사)</h2>
+        <p class="hint">녹음한 오디오를 STT API로 직접 보내 전사합니다(route B). 오디오 외부 전송은 분석 텍스트 전송과 별개의 동의가 필요합니다.</p>
+        <div class="field">
+          <label for="set-stt-provider">STT 공급자</label>
+          <select id="set-stt-provider">
+            <option value="openai">OpenAI Whisper</option>
+            <option value="deepgram">Deepgram (미지원, 후속)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="set-stt-key">STT API 키</label>
+          <input type="password" id="set-stt-key" placeholder="이 기기에만 저장됩니다" autocomplete="off" />
+        </div>
+        <div class="field">
+          <label for="set-stt-model">STT 모델</label>
+          <input type="text" id="set-stt-model" placeholder="whisper-1" />
+        </div>
+        <div class="field">
+          <label for="set-stt-endpoint">STT 엔드포인트</label>
+          <input type="text" id="set-stt-endpoint" />
+        </div>
+        <div class="field check">
+          <label><input type="checkbox" id="set-stt-always" /> 오디오 클라우드 전송 항상 허용 (경고 생략 — 회의에선 비권장)</label>
+        </div>
+        <div class="actions">
+          <button type="button" id="btn-test-stt" class="ghost">STT API 연결 테스트</button>
+          <span id="test-stt-status" class="status"></span>
+        </div>
+
+        <hr class="sep" />
         <div class="actions">
           <button id="btn-save-settings" class="primary">설정 저장</button>
           <span id="settings-status" class="status"></span>
