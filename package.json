@@ -1,0 +1,10 @@
+{
+  "name": "local-learning-meeting-notes",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "폰 현장 포착용 로컬 우선 AI 노트 PWA — 전사문→학습/업무 산출물 변환",
+  "scripts": {
+    "start": "node server.mjs"
+  }
+}

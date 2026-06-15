@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#1f2937" />
+    <title>로컬 AI 노트</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="app-header">
+      <h1>로컬 AI 노트</h1>
+      <nav class="tabs">
+        <button class="tab active" data-view="new">새 기록</button>
+        <button class="tab" data-view="list">기록</button>
+        <button class="tab" data-view="settings">설정</button>
+      </nav>
+    </header>
+
+    <main>
+      <!-- 새 기록 -->
+      <section id="view-new" class="view">
+        <div class="field">
+          <label>모드</label>
+          <div class="seg">
+            <label class="seg-opt"><input type="radio" name="mode" value="lesson" /> 수업</label>
+            <label class="seg-opt"><input type="radio" name="mode" value="meeting" checked /> 회의</label>
+          </div>
+        </div>
+
+        <div class="field" id="template-field">
+          <label for="template">회의 템플릿</label>
+          <select id="template">
+            <option value="general">일반 회의</option>
+            <option value="fdd">FDD 인터뷰</option>
+            <option value="ma">M&amp;A 거래처 미팅</option>
+            <option value="negotiation">거래처 협상</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="title">제목 (선택)</label>
+          <input type="text" id="title" placeholder="비워두면 분석 결과 제목 사용" />
+        </div>
+
+        <div class="field">
+          <label for="transcript">전사문</label>
+          <textarea id="transcript" rows="10" placeholder="회의/강의 내용을 붙여넣거나, 폰 키보드 마이크(받아쓰기)로 입력하세요."></textarea>
+        </div>
+
+        <div class="actions">
+          <button id="btn-analyze" class="primary">분석</button>
+          <span id="status" class="status"></span>
+        </div>
+
+        <div id="result-area" class="result hidden"></div>
+
+        <div id="save-bar" class="actions hidden">
+          <button id="btn-save" class="primary">기록 저장</button>
+          <button id="btn-discard" class="ghost">버리기</button>
+        </div>
+      </section>
+
+      <!-- 기록 목록 -->
+      <section id="view-list" class="view hidden">
+        <div id="list-area"></div>
+      </section>
+
+      <!-- 상세 -->
+      <section id="view-detail" class="view hidden">
+        <button id="btn-back" class="ghost">← 목록</button>
+        <div id="detail-area"></div>
+        <div class="actions">
+          <button id="btn-delete" class="danger">삭제</button>
+        </div>
+      </section>
+
+      <!-- 설정 -->
+      <section id="view-settings" class="view hidden">
+        <div class="field">
+          <label for="set-mode">분석 모드</label>
+          <select id="set-mode">
+            <option value="api">API (자동 분석)</option>
+            <option value="manual">수동 LLM (복사·붙여넣기)</option>
+            <option value="rule">규칙 기반</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="set-provider">공급자</label>
+          <select id="set-provider">
+            <option value="anthropic">Anthropic (Claude)</option>
+            <option value="openai">OpenAI 호환</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="set-key">분석 API 키</label>
+          <input type="password" id="set-key" placeholder="이 기기에만 저장됩니다" autocomplete="off" />
+        </div>
+        <div class="field">
+          <label for="set-model">모델</label>
+          <input type="text" id="set-model" placeholder="claude-opus-4-8" />
+          <p class="hint">예: claude-opus-4-8 (고품질) / claude-haiku-4-5 (저비용)</p>
+        </div>
+        <div class="field">
+          <label for="set-endpoint">엔드포인트</label>
+          <input type="text" id="set-endpoint" />
+        </div>
+        <div class="field">
+          <label for="set-maxtokens">max_tokens</label>
+          <input type="number" id="set-maxtokens" min="512" step="512" />
+        </div>
+        <div class="field check">
+          <label><input type="checkbox" id="set-always" /> 회의 모드 API 분석 항상 허용 (경고 생략)</label>
+        </div>
+        <div class="actions">
+          <button id="btn-save-settings" class="primary">설정 저장</button>
+          <span id="settings-status" class="status"></span>
+        </div>
+      </section>
+    </main>
+
+    <div id="modal-root"></div>
+
+    <script type="module" src="app.js"></script>
+  </body>
+</html>
