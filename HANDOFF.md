@@ -1,7 +1,7 @@
 # HANDOFF — local-learning-meeting-notes (새 세션 인계 문서)
 
 > 이 파일은 새 Claude Code 세션이 이 프로젝트를 이어받기 위한 단일 진입점이다.
-> 갱신 시점: 2026-06-15 (**M2 완료·GitHub 푸시 직후**, 커밋 `945b1d5`).
+> 갱신 시점: 2026-06-15 (**M2 완료 + 폰 실증 + GitHub Pages 배포 완료**).
 > 다음 작업: **M3** (Markdown 내보내기 + JSON 백업/복원 + 마감).
 
 ---
@@ -42,10 +42,13 @@
 
 ---
 
-## 3. 현재 상태 — M1·M2 완료(푸시됨)
+## 3. 현재 상태 — M1·M2 완료(푸시됨) + 폰 배포·실증 완료
 
-GitHub: https://github.com/daolmk-beep/local-learning-meeting-notes (main, HEAD `945b1d5`). 로컬 main↔origin/main 동기화됨.
-커밋: `58c0894`(M1) → `e72f3d7`(HANDOFF) → `945b1d5`(M2).
+GitHub: https://github.com/daolmk-beep/local-learning-meeting-notes — **레포 public 전환됨**, main 동기화.
+**배포(GitHub Pages, https):** https://daolmk-beep.github.io/local-learning-meeting-notes/ (Settings→Pages: main/root, `.nojekyll` 적용). 정적 배포라 push하면 ~1분 뒤 자동 반영.
+커밋: `58c0894`(M1) → `945b1d5`(M2) → `a2b3c5d`(.nojekyll).
+
+**운영 메모(현재 사용자 실사용 설정):** Anthropic 계정 잔액 부족으로, **분석=OpenAI `gpt-4o`**, **STT=OpenAI `whisper-1`**, OpenAI 키 1개를 분석·STT 양쪽에 사용 중. (코드 기본값은 여전히 anthropic/`claude-opus-4-8` — 크레딧 충전 시 설정에서 되돌리면 됨.)
 
 **파일 맵 (현재 전체):**
 
@@ -86,11 +89,11 @@ GitHub: https://github.com/daolmk-beep/local-learning-meeting-notes (main, HEAD 
 - **분석(Anthropic) 연결 테스트 = `△`** — **CORS 통과 + 키 유효**, 단 HTTP 400 `credit balance is too low`(계정 잔액 부족). 즉 아키텍처/CORS 문제 없음, **결제만 남음.**
 - 결론: **브라우저 직접 클라우드 호출 가능 — 프록시 불필요.**
 
-**아직 안 돌려본 것(다음에 한 번씩):**
-- 녹음→정지→클라우드 STT 전사→전사문 자동채움→분석→저장 **풀루프** + 상세 녹음 재생.
-  - 단, 분석을 돌리려면 **① Anthropic 크레딧 충전, 또는 ② 설정에서 공급자=OpenAI·모델 `gpt-4o`로 전환**(잔액 있는 STT용 OpenAI 키 재사용).
-  - **주의: 연결테스트는 입력칸 값으로 즉석 테스트하지만, 실제 녹음전사·분석은 "저장된 설정"을 쓴다 → 반드시 "설정 저장" 누른 뒤 풀루프.**
-- 오디오 외부전송 동의 모달(회의 추가경고), 키없음→manual 폴백, IndexedDB v2 마이그레이션, FDD/M&A 산출물 품질.
+**폰 풀루프 실증 완료 ✅ (GitHub Pages https, 실제 기기):**
+- 폰 PWA 설치 → 녹음(마이크 권한) → 클라우드 STT(whisper-1) 전사 → 전사문 자동채움 → **API 분석(gpt-4o) "분석 완료"** → 저장까지 동작 확인.
+- 함정 메모(다음 세션·사용자 참고): ① **연결테스트는 입력칸 값**, **실제 분석은 저장된 설정** → 공급자/모델 바꾸면 **"설정 저장" 필수.** ② 모델명은 정확히 **`gpt-4o`**(알파벳 o). `gpt-4.0`/`claude-...` 남기면 분석 실패→규칙폴백. ③ 규칙기반은 비상폴백(문장추출)일 뿐 — 실가치는 API 분석.
+
+**아직 안 본 것:** 회의 모드 풀루프(동의 모달 2번), FDD/M&A 실제 전사문 **산출물 품질**(프롬프트 튜닝 판단점), IndexedDB v2 마이그레이션 장기.
 
 **⚠ https 주의:** 마이크 녹음·서비스워커·PWA설치는 **https 또는 localhost에서만** 동작. PC localhost는 전기능 OK. **폰에서 PC LAN IP(http) 접속은 마이크/설치 막힘** → 폰 실사용/설치는 https 정적 호스팅(GitHub Pages 등) 필요.
 
